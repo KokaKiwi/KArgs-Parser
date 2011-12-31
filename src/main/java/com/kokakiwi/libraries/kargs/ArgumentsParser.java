@@ -1,9 +1,12 @@
 package com.kokakiwi.libraries.kargs;
 
+import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.kokakiwi.libraries.kargs.exceptions.RequiredArgException;
 
 public class ArgumentsParser
 {
@@ -20,7 +23,8 @@ public class ArgumentsParser
     
     public OptionSet parse(String... args) throws NoSuchMethodException,
             SecurityException, IllegalAccessException,
-            IllegalArgumentException, InvocationTargetException
+            IllegalArgumentException, InvocationTargetException,
+            RequiredArgException
     {
         OptionSet set = new OptionSet();
         
@@ -44,6 +48,14 @@ public class ArgumentsParser
                     String key = arg.substring(index + 1);
                     currentOption = getOption(key);
                 }
+            }
+        }
+        
+        for (Option<?> option : acceptedOptions)
+        {
+            if (option.isRequired() && !set.hasOption(option))
+            {
+                throw new RequiredArgException(option);
             }
         }
         
@@ -86,6 +98,10 @@ public class ArgumentsParser
         if (type == String.class)
         {
             value = (T) arg;
+        }
+        else if (type == File.class)
+        {
+            value = (T) new File(arg);
         }
         else
         {
